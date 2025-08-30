@@ -17,9 +17,9 @@ function App() {
 
 async function fetchdata(offset = 0, limit = 5) {
   try {
-    const res = await fetch(`http://localhost:8080/videos?limit=${limit}&offset=${offset}`);
+    const res = await fetch(`http://localhost:8080/api?limit=${limit}&offset=${offset}`);
     const data = await res.json();
-    setVideos((prev) => [...prev, ...data.subArray]);
+    setVideos((prev) => [...prev, ...data]);
   } catch (err) {
      console.error(err);
   }
