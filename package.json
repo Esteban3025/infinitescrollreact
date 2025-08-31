@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@vidstack/react": "^1.12.13"
+  }
+}

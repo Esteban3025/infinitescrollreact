@@ -7,9 +7,10 @@ html, body {
 
 #video {
   width: 35rem;
-  height: 100vh;
+  height: 100%;
   object-fit: cover;
   scroll-snap-align: start;
+  background-color: black;
 }
 
 ::-webkit-scrollbar {
@@ -26,15 +27,9 @@ html, body {
   gap: 5rem;
 }
 
-#container {
+.container {
   height: 100%;
   display: flex;
   justify-content: center;
   gap: 5rem;
-}
-
-#scroll {
-  position: fixed;
-  top: 0px;
-  right: 0px;
 }

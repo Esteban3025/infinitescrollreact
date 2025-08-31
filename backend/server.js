@@ -41,38 +41,47 @@ app.get("/videos", (req, res) => {
 
 app.get("/api", async (req, res) => {
   try {
-    const url = "https://www.reddit.com/r/pornrelapsed/.json";
+    const url = "https://www.reddit.com/r/damngoodinterracial/.json";
     const response = await fetch(url);
     const data = await response.json();
     const post = data.data.children;
+    const offset = req.query.offset || 0;
+    const limit = req.query.limit || 5;
     
     const videos = post.map(p => {
-      const d = p.data
-      let link;
+      const d = p.data;
 
-      // console.log(d.secure_media_embed?.media_domain_url);
+
+      // console.log({
+      //   url: d.preview?.reddit_video_preview?.hls_url,
+      //   photo: d.secure_media?.oembed?.thumbnail_url
+      // });
 
       if (d.preview?.reddit_video_preview) {
-        link = d.preview.reddit_video_preview.fallback_url;
-      } else if (d.secure_media_embed?.media_domain_url) {
-        link = d.secure_media_embed.media_domain_url;
-      } else {
-        link = d.secure_media_embed.media_domain_url;
+        return {
+          id: d.name,
+          title: d.title,
+          subreddit: d.subreddit,
+          url: d.preview?.reddit_video_preview.hls_url,
+          photo: d.secure_media?.oembed?.thumbnail_url
+        }
+      } else if (d.secure_media?.reddit_video?.hls_url) {
+        return {
+          id: d.name,
+          title: d.title,
+          subreddit: d.subreddit,
+          url: d.secure_media?.reddit_video?.hls_url,
+          photo: d.secure_media?.oembed?.thumbnail_url
+        }
       }
-
-      return {
-        title: d.title,
-        subreddit: d.subreddit,
-        url: link
-      }
+      return null
     })
     .filter(Boolean);
-    res.json(videos);
-  } catch (err) {
-    console.log("Hubo un error:", err);
-  }
+    res.json(videos.slice(offset, limit));
+    } catch (err) {
+      console.log("Hubo un error:", err);
+    }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server runing in http://localhost:${PORT}`);
