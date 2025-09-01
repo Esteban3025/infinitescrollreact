@@ -1,5 +1,9 @@
 import express, { response } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv'
+import {supabase} from './client.js';
+
+dotenv.config({ path: '/env' })
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -39,48 +43,17 @@ app.get("/videos", (req, res) => {
 });
 
 
-app.get("/api", async (req, res) => {
-  try {
-    const url = "https://www.reddit.com/r/damngoodinterracial/.json";
-    const response = await fetch(url);
-    const data = await response.json();
-    const post = data.data.children;
-    const offset = req.query.offset || 0;
-    const limit = req.query.limit || 5;
-    
-    const videos = post.map(p => {
-      const d = p.data;
+app.get("/api/videosclean", async (req, res) => {
+  const limit = req.query.limit || 3;
+  const offset = req.query.offset || 0;
 
-
-      // console.log({
-      //   url: d.preview?.reddit_video_preview?.hls_url,
-      //   photo: d.secure_media?.oembed?.thumbnail_url
-      // });
-
-      if (d.preview?.reddit_video_preview) {
-        return {
-          id: d.name,
-          title: d.title,
-          subreddit: d.subreddit,
-          url: d.preview?.reddit_video_preview.hls_url,
-          photo: d.secure_media?.oembed?.thumbnail_url
-        }
-      } else if (d.secure_media?.reddit_video?.hls_url) {
-        return {
-          id: d.name,
-          title: d.title,
-          subreddit: d.subreddit,
-          url: d.secure_media?.reddit_video?.hls_url,
-          photo: d.secure_media?.oembed?.thumbnail_url
-        }
-      }
-      return null
-    })
-    .filter(Boolean);
-    res.json(videos.slice(offset, limit));
-    } catch (err) {
-      console.log("Hubo un error:", err);
-    }
+  let { data: videosclean, error } = await supabase
+  .from('videosclean')
+  .select('*')
+  .range(offset, limit);
+  
+  
+  res.send(videosclean);
 });
 
 app.listen(PORT, () => {

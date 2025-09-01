@@ -1,162 +1,102 @@
-import { useEffect, useState, useRef } from 'react'
-import './App.css'
-import ReactPlayer from 'react-player'
-import Hls from "hls.js";
+import { useEffect, useState, useRef } from 'react';
+import ReactPlayer from 'react-player';
+import './App.css';
 
 function App() {
   const [videos, setVideos] = useState([]);
   const [current, setCurrent] = useState(0);
-  const [volume, _setVolume] = useState(0.5);
-  const [_isLoading, _setLoanding] = useState(true); // Estado de loading no te olvides de colocar al final
+  const [volume, setVolume] = useState(0.5);
 
-  const cardRefs = useRef([]); 
+  const cardRefs = useRef([]);
   const containerRef = useRef(null);
-  let isLoadingMore = useRef(false);
-  let limit = useRef(3);
-  let offset = useRef(0);
-
   const videoRef = useRef();
 
-  useEffect(() => {
-    const hls = new Hls({
-      debug: true,
-      liveSyncDuration: 10,
-      liveMaxLatencyDuration: 30,
-      startLevel: 2
-    });
+  const isLoadingMore = useRef(false);
+  const limit = useRef(5);
+  const offset = useRef(0);
 
-    
-
-    if (Hls.isSupported() && videoRef.current) {
-      hls.attachMedia(videoRef.current);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      hls.currentLevel = 2; // 🔹 fuerza a usar solo esa resolución
-      });
-      hls.on(Hls.Events.ERROR, (err) => {
-        console.log(err);
-      });
-    } else {
-      console.log("load");
+  // 🚀 Fetch desde tu endpoint backend
+  async function fetchData() {
+    try {
+      const res = await fetch(`http://localhost:8080/api/videosclean?limit=${limit.current}&offset=${offset.current}`);
+      const data = await res.json();
+      setVideos(prev => [...prev, ...data.filter(v => v.url)]);
+    } catch (err) {
+      console.error(err);
     }
-    return () => {
-      hls.destroy();
-    };
+  }
+
+  useEffect(() => {
+    console.log("limit in fetch", limit.current);
+    console.log("offset in fetch", offset.current);
+    fetchData();
   }, []);
 
-async function fetchdata(offset = 0, limit = 5) {
-  try {
-    const res = await fetch(`http://localhost:8080/api?limit=${limit}&offset=${offset}`);
-    const data = await res.json();
-    setVideos((prev) => [...prev, ...data]);
-  } catch (err) {
-     console.error(err);
-  }
-}
-
-useEffect(() => {
-  fetchdata();
-}, []) 
-
-
+  // Scroll infinito
   useEffect(() => {
-    const options = {
-      root: containerRef.current,
-      rootMargin: "0px",
-      threshold: 0.5,
-    };
-    const observer = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
+    const options = { root: containerRef.current, rootMargin: '0px', threshold: 0.5 };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
         if (entry.isIntersecting && !isLoadingMore.current) {
-          isLoadingMore.current = true
-          fetchdata(offset.current, limit.current).finally(() => {
+          isLoadingMore.current = true;
+          fetchData(offset.current, limit.current).finally(() => {
             isLoadingMore.current = false;
             offset.current += limit.current;
           });
           observer.unobserve(entry.target);
         }
       });
-    }, [options]);
+    }, options);
 
-    const lastvideo = cardRefs.current[videos.length - 1];
+    const lastVideo = cardRefs.current[videos.length - 1];
+    if (lastVideo) observer.observe(lastVideo);
 
-    if (lastvideo) {
-      observer.observe(lastvideo);
-    }
-
-    return () => {
-      observer.disconnect(); 
-    }
+    return () => observer.disconnect();
   }, [videos]);
 
+  // Actualizar video actual
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number(entry.target.dataset.index);
-            setCurrent(index);
-          }
+        entries.forEach(entry => {
+          if (entry.isIntersecting) setCurrent(Number(entry.target.dataset.index));
         });
       },
-      { threshold: 0.3 } 
+      { threshold: 0.3 }
     );
 
-    cardRefs.current.forEach((card) => {
-    if (card) observer.observe(card);
-  });
+    cardRefs.current.forEach(card => card && observer.observe(card));
 
-  return () => {
-    cardRefs.current.forEach((card) => {
-      if (card) observer.unobserve(card);
-    });
-    };
+    return () => cardRefs.current.forEach(card => card && observer.unobserve(card));
   }, [videos.length]);
 
   console.log("limit", limit.current);
   console.log("offset", offset.current);
 
-  const handleResetVideo = () => {
-        if (videoRef.current) {
-          videoRef.current.seekTo(0, 'seconds'); // Resets to the beginning
-          // Or, to seek to a specific time, e.g., 30 seconds:
-          // playerRef.current.seekTo(30, 'seconds');
-        }
-  };
-
   return (
-
-  <div id='main-container' ref={containerRef}>
-    
-          { 
-            videos.map((video, i) =>  (
-                  <div className='container' key={i - 1}
-                    ref={(el) => (cardRefs.current[i] = el)}
-                    data-index={i}
-                  >
-                    <ReactPlayer
-                      src={video.url}
-                      ref={videoRef}
-                      loop
-                      playing={i === current ? true : null}
-                      controls={true}
-                      muted
-                      volume={volume}
-                      style={{height: '100vh',
-                        backgroundColor: 'black',
-                        scrollSnapAlign: 'start',
-                      }}
-                      config={{
-                        startLevel: 2,
-                      }}
-                      
-                      preload='none'
-                    />
-                  </div>
-              )
-            )
-          }
+    <div id="main-container" ref={containerRef}>
+      {videos.map((video, i) => (
+        <div
+          className="container"
+          key={video.id}
+          ref={(el) => (cardRefs.current[i] = el)}
+          data-index={i}
+        >
+          <ReactPlayer
+            src={video.url}
+            ref={videoRef}
+            loop
+            playing={i === current}
+            controls
+            muted
+            volume={volume}
+            style={{ height: '100vh', backgroundColor: 'black', scrollSnapAlign: 'start' }}
+            preload="none"
+          />
         </div>
-  ) 
+      ))}
+    </div>
+  );
 }
 
-export default App
+export default App;
