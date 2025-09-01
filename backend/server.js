@@ -44,14 +44,17 @@ app.get("/videos", (req, res) => {
 
 
 app.get("/api/videosclean", async (req, res) => {
-  const limit = req.query.limit || 3;
-  const offset = req.query.offset || 0;
+  const limit = 5;
+  const page = parseInt(req.query.page) || 1;
+
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
 
   let { data: videosclean, error } = await supabase
   .from('videosclean')
   .select('*')
-  .range(offset, limit);
-  
+  .range(from, to);
+
   
   res.send(videosclean);
 });
