@@ -6,7 +6,7 @@ import {supabase} from './client.js';
 dotenv.config({ path: '/env' })
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8081;
 
 app.use(cors("*"));
 

@@ -5,7 +5,7 @@ import './App.css';
 function App() {
   const [videos, setVideos] = useState([]);
   const [current, setCurrent] = useState(0);
-  const [volume, _setVolume] = useState(0.5);
+  const [volume, _setVolume] = useState(0.2);
   const [page, setPage] = useState(1); 
 
   const cardRefs = useRef([]);
@@ -13,57 +13,53 @@ function App() {
   const videoRef = useRef();
   const isLoadingMore = useRef(false);
 
-  // 🚀 Fetch desde tu endpoint backend
   async function fetchData() {
     if (isLoadingMore.current) return;
 
-    isLoadingMore.current = true; // ✅ Marcar que está cargando
+    isLoadingMore.current = true; 
 
     try {
-      const res = await fetch(`http://localhost:8080/api/videosclean?page=${page}`);
+      const res = await fetch(`http://localhost:8081/api/videosclean?page=${page}`);
       const data = await res.json();
       
-      // ✅ Verificar si hay datos antes de agregar
       if (data && data.length > 0) {
         setVideos(prev => [...prev, ...data.filter(v => v.url)]);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
-      isLoadingMore.current = false; // ✅ Liberar el flag
+      isLoadingMore.current = false; 
     }
   }
 
   useEffect(() => {
     fetchData();
-  }, [page]); // ✅ page como dependencia
+  }, [page]);
 
   // Scroll infinito
   useEffect(() => {
-    if (videos.length < 2) return; // ✅ Verificar que hay suficientes videos
+    if (videos.length < 2) return; 
 
     const options = { 
       root: containerRef.current, 
-      rootMargin: '100px', // ✅ Más margen para cargar antes
+      rootMargin: '100px', 
       threshold: 0.1 
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && !isLoadingMore.current) {
-          console.log('Loading more videos...'); // Debug
           setPage(prevPage => prevPage + 1);
         }
       });
     }, options);
 
-    // ✅ Usar el penúltimo video como trigger (más seguro)
-    const triggerIndex = Math.max(0, videos.length - 3);
+    const triggerIndex = Math.max(0, videos.length - 4);
     const target = cardRefs.current[triggerIndex];
     
     if (target) {
       observer.observe(target);
-      console.log(`Observing video at index ${triggerIndex}`); // Debug
+      console.log(`Observing video at index ${triggerIndex}`); 
     }
 
     return () => {
@@ -71,9 +67,9 @@ function App() {
         observer.unobserve(target);
       }
     };
-  }, [videos.length]); // ✅ Dependencia correcta
+  }, [videos.length]); 
 
-  // Actualizar video actual
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -98,13 +94,14 @@ function App() {
     };
   }, [videos.length]);
 
-  console.log('Current video:', current);
-  console.log('Current page:', page);
-  console.log('Total videos:', videos.length);
-  console.log('Is loading:', isLoadingMore.current);
+  // console.log('Current video:', current);
+  // console.log('Current page:', page);
+  // console.log('Total videos:', videos.length);
+  // console.log('Is loading:', isLoadingMore.current);
 
   return (
     <div id="main-container" ref={containerRef}>
+
       {videos.map((video, i) => (
         <div
           className="container"
@@ -127,17 +124,15 @@ function App() {
             }}
             preload="none"
           />
-          <p>{video.title}</p>
-          <p>ID: {video.id} | Index: {i}</p>
         </div>
       ))}
-      
-      {/* ✅ Mostrar indicador cuando realmente está cargando */}
+
       {isLoadingMore.current && (
         <div className="loading-indicator">
           <p>Cargando más videos...</p>
         </div>
       )}
+      
     </div>
   );
 }
