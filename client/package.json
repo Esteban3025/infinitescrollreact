@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.12",
     "hls.js": "^1.6.11",
     "media-chrome": "^4.13.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-player": "^3.3.2"
+    "react-player": "^3.3.2",
+    "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
@@ -25,7 +27,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
-    "video.js": "^8.23.4",
     "vite": "^7.1.2"
   },
   "description": "All the logic is in the client folder: client/src/App.jsx",
